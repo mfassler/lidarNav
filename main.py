@@ -51,7 +51,7 @@ bboxParser = BBox_Parser()
 lockOn = LockOn()
 
 
-BBOX_PORT = 3101
+BBOX_PORT = 4101 # 3101
 bbox_socks = [
     socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
     socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
@@ -76,13 +76,15 @@ while True:
 
         elif oneInput == bbox_socks[0]:
             bboxParser.rx_packet(0, bbox_socks[0])
+            myVis.ppl_angles = bboxParser.get_all_ppl_angles()
 
         elif oneInput == bbox_socks[1]:
             bboxParser.rx_packet(1, bbox_socks[1])
+            myVis.ppl_angles = bboxParser.get_all_ppl_angles()
 
         elif oneInput == bbox_socks[2]:
             bboxParser.rx_packet(2, bbox_socks[2])
-
+            myVis.ppl_angles = bboxParser.get_all_ppl_angles()
 
         elif oneInput == nav_sock:
             #pkt, addr = nav_sock.recvfrom(32)

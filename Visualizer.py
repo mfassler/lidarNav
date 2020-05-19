@@ -4,7 +4,7 @@ import cv2
 
 #from misc_utils import get_last_packet
 from misc_map_tools import make_map
-from VelodyneVLP16 import VelodyneVLP16
+from VelodyneVLP16 import VelodyneVLP16, LOOKUP_COS, LOOKUP_SIN
 
 
 
@@ -120,6 +120,47 @@ class Visualizer(VelodyneVLP16):
                 filepos += numbytes
             STOP_MAGIC = b"_g1nC_EOF"
             lidar_sock.sendto(STOP_MAGIC, IMG_RECV_ADDRESS)
+
+
+        for theta_min, theta_max in self.ppl_angles:
+
+            # - Zero degrees points forward.
+            # - positive angles are to the right (clockwise)
+            # - negative angles are to the left (counter-clockwise)
+
+            # But in the array, there is a "seam" at zero degrees
+
+            idx_min = int(round(theta_min)) % 360
+            idx_max = int(round(theta_max)) % 360
+
+            if idx_max > idx_min:
+                # contiguous range, treat as normal
+                idx = np.argmin(self.ranges[idx_min:idx_max]) + idx_min
+            else:
+                # dis-contiguous range, must to multiple operations:
+                idx1 = np.argmin(self.ranges[idx_min:]) + idx_min
+                idx2 = np.argmin(self.ranges[:idx_max+1])
+                if self.ranges[idx1] < self.ranges[idx2]:
+                    idx = idx1
+                else:
+                    idx = idx2
+
+            r = self.ranges[idx]
+            if r > 0.01:
+                x = r * np.sin(np.radians(idx))
+                y = r * np.cos(np.radians(idx))
+                x_px = self._x_center + int(np.round(x * self._spacing))
+                y_px = self._y_center - int(np.round(y * self._spacing))
+
+                #y = int(round(800 + 100 * np.cos(np.radians(idx)) * dist))
+                #x = int(round(700 + 100 * np.sin(np.radians(idx)) * dist))
+                if x_px > self._X_MIN and x_px < self._X_MAX:
+                    if y_px > self._Y_MIN and y_px < self._Y_MAX:
+                        #theta = 0.5 * (theta_min + theta_max)
+                        #ppl_global_coords.append((dist, theta, x, y))
+                        cv2.circle(self._map, (x_px,y_px), 11, [0,0,255], -1)
+                        cv2.circle(self._map, (x_px,y_px), 13, [0,0,0], 2)
+
 
         if self._DO_GUI:
             cv2.imshow('asdf', self._map)
