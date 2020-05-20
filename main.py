@@ -18,7 +18,6 @@ from misc_map_tools import make_map
 
 from BBox_Parser import BBox_Parser
 from Visualizer import Visualizer
-from LockOn import LockOn
 
 
 VELODYNE_PORT = 2368
@@ -48,7 +47,6 @@ DO_GUI = True
 
 myVis = Visualizer(do_gui=True, do_network=False)
 bboxParser = BBox_Parser()
-lockOn = LockOn()
 
 
 BBOX_PORT = 4101 # 3101

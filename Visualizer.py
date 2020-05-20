@@ -6,7 +6,7 @@ import cv2
 from misc_map_tools import make_map
 from VelodyneVLP16 import VelodyneVLP16, LOOKUP_COS, LOOKUP_SIN
 
-
+from LockOn import LockOn
 
 class Visualizer(VelodyneVLP16):
     def __init__(self, do_gui=True, do_network=False):
@@ -28,6 +28,7 @@ class Visualizer(VelodyneVLP16):
 
         self._a_map = make_map(width, height, self._spacing)
         self._map = np.copy(self._a_map)
+        self.lockOn = LockOn()
 
         # Jet colormap, BGR:
         self._Laser_Colors = [
@@ -122,6 +123,7 @@ class Visualizer(VelodyneVLP16):
             lidar_sock.sendto(STOP_MAGIC, IMG_RECV_ADDRESS)
 
 
+        ppl_global_coords = []
         for theta_min, theta_max in self.ppl_angles:
 
             # - Zero degrees points forward.
@@ -156,10 +158,16 @@ class Visualizer(VelodyneVLP16):
                 #x = int(round(700 + 100 * np.sin(np.radians(idx)) * dist))
                 if x_px > self._X_MIN and x_px < self._X_MAX:
                     if y_px > self._Y_MIN and y_px < self._Y_MAX:
-                        #theta = 0.5 * (theta_min + theta_max)
-                        #ppl_global_coords.append((dist, theta, x, y))
+                        theta = 0.5 * (theta_min + theta_max)
+                        ppl_global_coords.append((r, theta, x_px, y_px))
                         cv2.circle(self._map, (x_px,y_px), 11, [0,0,255], -1)
                         cv2.circle(self._map, (x_px,y_px), 13, [0,0,0], 2)
+
+        #autopilot_lock = [0, 0]
+        self.lockOn.choose_target(ppl_global_coords)
+        if self.lockOn.confidence > 0.1:
+            cv2.circle(self._map, (self.lockOn.pos[0], self.lockOn.pos[1]), 16, [0,0,0], 3)
+            #autopilot_lock = [self.lockOn.r, self.lockOn.angle]
 
 
         if self._DO_GUI:

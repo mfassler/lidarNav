@@ -11,7 +11,7 @@ class LockOn:
         self.ts = time.time()
         self.confidence = 0.0
 
-    def calc_angles_and_distances(self):
+    def _calc_angles_and_distances(self):
         self.dist2lock = np.empty(len(self.ppl_global_coords))
 
         for i, row in enumerate(self.ppl_global_coords):
@@ -20,7 +20,7 @@ class LockOn:
 
     def choose_target(self, ppl_global_coords):
         self.ppl_global_coords = ppl_global_coords
-        self.calc_angles_and_distances()
+        self._calc_angles_and_distances()
 
         if self.confidence < 0.1:
             # lock on to the closest person who is within +/- 40 degrees:
@@ -36,7 +36,7 @@ class LockOn:
                 self.r, self.angle, x, y = self.ppl_global_coords[idx]
                 self.pos = np.array([x, y])
                 self.confidence = 0.5
-                self.calc_angles_and_distances()
+                self._calc_angles_and_distances()
 
         else:
             if len(self.dist2lock):
