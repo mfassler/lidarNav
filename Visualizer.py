@@ -1,4 +1,6 @@
 
+import struct
+import socket
 import numpy as np
 import cv2
 
@@ -9,7 +11,7 @@ from VelodyneVLP16 import VelodyneVLP16, LOOKUP_COS, LOOKUP_SIN
 from LockOn import LockOn
 
 class Visualizer(VelodyneVLP16):
-    def __init__(self, do_gui=True, do_network=False):
+    def __init__(self, folAvoid_rx_addr, do_gui=True, do_network=False):
         super(Visualizer, self).__init__()
         self.callback = self._callback
         height = 800
@@ -19,6 +21,7 @@ class Visualizer(VelodyneVLP16):
         self._y_center = 800 # offset at bottom of screen
         self._spacing = 100  # pixels per meter
 
+        self._folAvoid_rx_addr = folAvoid_rx_addr
         self._DO_GUI = do_gui
         self._DO_NETWORK = do_network
         self._X_MIN = 1
@@ -29,6 +32,8 @@ class Visualizer(VelodyneVLP16):
         self._a_map = make_map(width, height, self._spacing)
         self._map = np.copy(self._a_map)
         self.lockOn = LockOn()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('0.0.0.0', 0))
 
         # Jet colormap, BGR:
         self._Laser_Colors = [
@@ -163,11 +168,14 @@ class Visualizer(VelodyneVLP16):
                         cv2.circle(self._map, (x_px,y_px), 11, [0,0,255], -1)
                         cv2.circle(self._map, (x_px,y_px), 13, [0,0,0], 2)
 
-        #autopilot_lock = [0, 0]
+        autopilot_lock = [0, 0]
         self.lockOn.choose_target(ppl_global_coords)
         if self.lockOn.confidence > 0.1:
             cv2.circle(self._map, (self.lockOn.pos[0], self.lockOn.pos[1]), 16, [0,0,0], 3)
-            #autopilot_lock = [self.lockOn.r, self.lockOn.angle]
+            autopilot_lock = [self.lockOn.r, self.lockOn.angle]
+
+        udpPacket = struct.pack(b'ddddcbbb', autopilot_lock[0], autopilot_lock[1], 0,0,b' ',0,0,0)
+        self.sock.sendto(udpPacket, self._folAvoid_rx_addr)
 
 
         if self._DO_GUI:
