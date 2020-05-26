@@ -10,8 +10,14 @@ from VelodyneVLP16 import VelodyneVLP16, LOOKUP_COS, LOOKUP_SIN
 
 from LockOn import LockOn
 
+try:
+    import ROBOT_CONFIG as config
+except:
+    import ROBOT_CONFIG_default as config
+
+
 class Visualizer(VelodyneVLP16):
-    def __init__(self, folAvoid_rx_addr, do_gui=True, do_network=False):
+    def __init__(self):
         super(Visualizer, self).__init__()
         self.callback = self._callback
         height = 800
@@ -21,9 +27,10 @@ class Visualizer(VelodyneVLP16):
         self._y_center = 800 # offset at bottom of screen
         self._spacing = 100  # pixels per meter
 
-        self._folAvoid_rx_addr = folAvoid_rx_addr
-        self._DO_GUI = do_gui
-        self._DO_NETWORK = do_network
+        self._folAvoid_rx_addr = config.FOLLOW_AVOID_RECV_ADDRESS
+        self._IMG_RECV_ADDRESS = config.IMG_RECV_ADDRESS
+        self._DO_GUI = config.DO_GUI
+        self._DO_NETWORK = config.DO_NETWORK
         self._X_MIN = 1
         self._Y_MIN = 1
         self._X_MAX = (width - 2)
@@ -116,16 +123,16 @@ class Visualizer(VelodyneVLP16):
             filepos = 0
             numbytes = 0
             START_MAGIC = b"__HylPnaJY_START_PNG %09d\n" % (bufLen)
-            lidar_sock.sendto(START_MAGIC, IMG_RECV_ADDRESS)
+            lidar_sock.sendto(START_MAGIC, self._IMG_RECV_ADDRESS)
             while filepos < bufLen:
                 if (bufLen - filepos) < 1400:
                     numbytes = bufLen - filepos
                 else:
                     numbytes = 1400  # ethernet MTU is 1500
-                lidar_sock.sendto(pngBuffer[filepos:(filepos+numbytes)], IMG_RECV_ADDRESS)
+                lidar_sock.sendto(pngBuffer[filepos:(filepos+numbytes)], self._IMG_RECV_ADDRESS)
                 filepos += numbytes
             STOP_MAGIC = b"_g1nC_EOF"
-            lidar_sock.sendto(STOP_MAGIC, IMG_RECV_ADDRESS)
+            lidar_sock.sendto(STOP_MAGIC, self._IMG_RECV_ADDRESS)
 
 
         ppl_global_coords = []

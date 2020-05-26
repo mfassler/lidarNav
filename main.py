@@ -40,13 +40,7 @@ nav_sock.bind(("127.0.0.1", NAV_PORT))
 #    filename = sys.argv[1]
 #    vid_out = cv2.VideoWriter('cam_video.mjpg', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (800, 800))
 
-DO_NETWORK = False
-IMG_RECV_ADDRESS = ('127.0.0.1', 53521)
-
-FOLLOW_AVOID_RECV_ADDRESS = ('127.0.0.1', 52535)
-DO_GUI = True
-
-myVis = Visualizer(FOLLOW_AVOID_RECV_ADDRESS, do_gui=True, do_network=False)
+myVis = Visualizer()
 bboxParser = BBox_Parser()
 
 
