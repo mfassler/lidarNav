@@ -15,7 +15,7 @@ def make_map(width, height, grid_spacing):
     # Radial gridlines:
     max_radius = np.sqrt(height**2 + (width/2)**2)
     x_center = int(round(width/2))
-    y_center = int(round(height/2))
+    y_center = int(round(height))
     for r in np.arange(grid_spacing, max_radius, grid_spacing):
         cv.circle(_map, (x_center, y_center), int(r), (255,200,150), 2)
 
