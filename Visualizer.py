@@ -115,26 +115,6 @@ class Visualizer(VelodyneVLP16):
 
     def _callback(self):
 
-        #params = [cv2.IMWRITE_PNG_COMPRESSION, 1]
-        params = [cv2.IMWRITE_JPEG_QUALITY, 20]
-        if self._DO_NETWORK:
-            _nothing, pngBuffer = cv2.imencode('*.jpg', self._map, params)
-            bufLen = len(pngBuffer)
-            filepos = 0
-            numbytes = 0
-            START_MAGIC = b"__HylPnaJY_START_PNG %09d\n" % (bufLen)
-            lidar_sock.sendto(START_MAGIC, self._IMG_RECV_ADDRESS)
-            while filepos < bufLen:
-                if (bufLen - filepos) < 1400:
-                    numbytes = bufLen - filepos
-                else:
-                    numbytes = 1400  # ethernet MTU is 1500
-                lidar_sock.sendto(pngBuffer[filepos:(filepos+numbytes)], self._IMG_RECV_ADDRESS)
-                filepos += numbytes
-            STOP_MAGIC = b"_g1nC_EOF"
-            lidar_sock.sendto(STOP_MAGIC, self._IMG_RECV_ADDRESS)
-
-
         ppl_global_coords = []
         for theta_min, theta_max in self.ppl_angles:
 
@@ -184,12 +164,31 @@ class Visualizer(VelodyneVLP16):
         udpPacket = struct.pack(b'ddddcbbb', autopilot_lock[0], autopilot_lock[1], 0,0,b' ',0,0,0)
         self.sock.sendto(udpPacket, self._folAvoid_rx_addr)
 
-
         if self._DO_GUI:
             cv2.imshow('asdf', self._map)
             cv2.waitKey(1)
+
         #if self._WRITE_VIDEO:
         #    vid_out.write(self._map)
+
+        #params = [cv2.IMWRITE_PNG_COMPRESSION, 1]
+        params = [cv2.IMWRITE_JPEG_QUALITY, 20]
+        if self._DO_NETWORK:
+            _nothing, pngBuffer = cv2.imencode('*.jpg', self._map, params)
+            bufLen = len(pngBuffer)
+            filepos = 0
+            numbytes = 0
+            START_MAGIC = b"__HylPnaJY_START_PNG %09d\n" % (bufLen)
+            self.sock.sendto(START_MAGIC, self._IMG_RECV_ADDRESS)
+            while filepos < bufLen:
+                if (bufLen - filepos) < 1400:
+                    numbytes = bufLen - filepos
+                else:
+                    numbytes = 1400  # ethernet MTU is 1500
+                self.sock.sendto(pngBuffer[filepos:(filepos+numbytes)], self._IMG_RECV_ADDRESS)
+                filepos += numbytes
+            STOP_MAGIC = b"_g1nC_EOF"
+            self.sock.sendto(STOP_MAGIC, self._IMG_RECV_ADDRESS)
 
         #self._map = self.make_avoidance_areas(speed=self.robot_speed)
         self._map = np.copy(self._a_map)
